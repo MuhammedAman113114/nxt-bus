@@ -1,4 +1,4 @@
-# Stage 1 — Dependencies & Build
+# Stage 1 — Install dependencies & build
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -12,28 +12,28 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Build (if your project uses build step; otherwise remove)
-RUN npm run build || echo "No build step"
+# Build (if your project uses build step)
+RUN npm run build || echo "No build script"
 
-# Stage 2 — Production Minimal Image
+# Stage 2 — Production Image
 FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy package files again
+# Copy package files
 COPY package*.json ./
 
 # Install ONLY production dependencies
 RUN npm install --omit=dev
 
-# Copy built code
+# Copy everything from builder
 COPY --from=builder /app ./
 
-# Prisma: generate client
-RUN npx prisma generate || echo "No Prisma"
+# Prisma client (if applicable)
+RUN npx prisma generate || echo "No prisma"
 
-# Expose Render port
+# Expose port for Render
 EXPOSE 10000
 
-# Start the server
+# Start the backend server
 CMD ["npm", "start"]
