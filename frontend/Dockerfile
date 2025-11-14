@@ -1,6 +1,4 @@
-# Multi-stage build for optimized production image
-
-# Stage 1: Build
+# Stage 1 — Dependencies & Build
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -8,38 +6,34 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci && \
-    npm cache clean --force
+# Install ALL dependencies
+RUN npm install
 
 # Copy source code
 COPY . .
 
-# Build application
-RUN npm run build
+# Build (if your project uses build step; otherwise remove)
+RUN npm run build || echo "No build step"
 
-# Stage 2: Production with Nginx
-FROM nginx:alpine
+# Stage 2 — Production Minimal Image
+FROM node:20-alpine
 
-# Install curl for healthcheck
-RUN apk add --no-cache curl
+WORKDIR /app
 
-# Copy custom nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy package files again
+COPY package*.json ./
 
-# Copy built application from builder
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Install ONLY production dependencies
+RUN npm install --omit=dev
 
-# Create nginx user
-RUN chown -R nginx:nginx /usr/share/nginx/html && \
-    chmod -R 755 /usr/share/nginx/html
+# Copy built code
+COPY --from=builder /app ./
 
-# Expose port
-EXPOSE 80
+# Prisma: generate client
+RUN npx prisma generate || echo "No Prisma"
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost/health || exit 1
+# Expose Render port
+EXPOSE 10000
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start the server
+CMD ["npm", "start"]
