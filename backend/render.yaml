@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: nxtbus-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: node dist/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nxtbus-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: REFRESH_TOKEN_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: https://your-frontend-url.netlify.app
+
+databases:
+  - name: nxtbus-db
+    databaseName: nxtbus
+    user: nxtbus
+    plan: free

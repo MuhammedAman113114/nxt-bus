@@ -1,0 +1,9 @@
+{
+  "database-url-var": "DATABASE_URL",
+  "migrations-dir": "./db/migrations",
+  "dir": "./db/migrations",
+  "schema": "public",
+  "decamelize": true,
+  "migration-file-language": "js",
+  "migrations-table": "pgmigrations"
+}
